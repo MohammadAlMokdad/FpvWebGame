@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FPV Drone Defense</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23111'/%3E%3Cpath d='M16 4v9M16 19v9M4 16h9M19 16h9' stroke='%23ffb43c' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23ff4535'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="hud" class="hidden">
+      <div class="osd tl"><span class="rec"><i></i>REC</span><span id="timer">00:00</span><span id="vision-tag" class="vision-tag hidden"></span></div>
+      <canvas id="compass" width="460" height="38"></canvas>
+      <div class="osd tr">
+        <div class="signal"><span id="sig-bars"><i></i><i></i><i></i><i></i><i></i></span><span id="lq">LQ 100</span></div>
+        <div id="mute-ind" class="dim hidden">MUTED</div>
+      </div>
+      <div class="osd lc">
+        <div><label>ALT</label><span id="alt">0</span><small>m</small></div>
+        <div><label>SPD</label><span id="spd">0</span><small>km/h</small></div>
+      </div>
+      <div class="osd rc">
+        <div><label>HULL</label><span id="hull">100</span><small>%</small></div>
+        <div class="hullbar"><div id="hull-fill"></div></div>
+        <div class="ammo" id="ammo-row"><label>GUN</label><span id="ammo">0</span></div>
+        <div class="ammo" id="missile-row"><label>MSL</label><span id="missiles">0</span></div>
+      </div>
+
+      <div id="crosshair"><i class="h"></i><i class="v"></i><b></b></div>
+      <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+      <div id="dmg-arrows"></div>
+      <div id="muzzle"></div>
+
+      <div class="osd bl">
+        <div><label>WAVE</label><span id="wave">1</span></div>
+        <div><label>HOSTILES</label><span id="hostiles">0</span></div>
+      </div>
+      <div id="integrity">
+        <div class="label">BASE INTEGRITY <span id="integrity-pct">100%</span></div>
+        <div class="bar"><div id="integrity-fill"></div></div>
+      </div>
+      <div class="osd br">
+        <canvas id="radar" width="190" height="190"></canvas>
+        <div><label>SCORE</label><span id="score">0</span></div>
+        <div class="dim"><label>HI</label><span id="hiscore">0</span></div>
+      </div>
+
+      <div id="killfeed"></div>
+      <div id="banner"><div class="title"></div><div class="sub"></div></div>
+      <div id="alert"></div>
+      <div id="lost"><div>SIGNAL LOST</div><small>RECONNECTING <span id="lost-count">4</span></small></div>
+    </div>
+
+    <div id="loading" class="screen">
+      <div class="panel">
+        <h1>FPV DRONE DEFENSE</h1>
+        <p class="dim">ESTABLISHING VIDEO LINK…</p>
+        <div class="progress"><div id="progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="menu" class="screen hidden">
+      <div class="panel">
+        <h1>FPV DRONE DEFENSE</h1>
+        <h2>OUTPOST OVERWATCH</h2>
+        <p class="brief">Hostile infantry are converging on the outpost from every direction. Hunt them from the air before they reach the walls. Each wave issues a fixed load of rounds and missiles: run dry before the wave is cleared and the outpost is lost. The waves never stop.</p>
+        <div class="controls">
+          <span>MOUSE</span><span>look / aim</span>
+          <span>LEFT CLICK</span><span>gun (high-explosive rounds)</span>
+          <span>RIGHT CLICK</span><span>missile (large blast)</span>
+          <span>W A S D</span><span>fly</span>
+          <span>SPACE / SHIFT / WHEEL</span><span>climb / descend</span>
+          <span>ESC</span><span>pause</span>
+          <span>V</span><span>cycle night-vision mode (night)</span>
+          <span>M</span><span>mute all sound</span>
+        </div>
+        <div class="settings" id="menu-settings">
+          <label>MOUSE SENSITIVITY</label><input data-setting="sensitivity" type="range" min="0.3" max="2.5" step="0.05" /><span data-value="sensitivity"></span>
+          <label>MUSIC VOLUME</label><input data-setting="music" type="range" min="0" max="1" step="0.05" /><span data-value="music"></span>
+          <label>EFFECTS VOLUME</label><input data-setting="fx" type="range" min="0" max="1" step="0.05" /><span data-value="fx"></span>
+          <label>GRAPHICS</label><select data-setting="quality"><option value="auto">AUTO (60 FPS)</option><option value="low">LOW</option><option value="medium">MEDIUM</option><option value="high">HIGH</option></select><span></span>
+        </div>
+        <div class="settings mission">
+          <label>TIME OF DAY</label><select data-setting="timeOfDay"><option value="day">DAY</option><option value="night">NIGHT</option></select><span></span>
+          <label>NIGHT VISION</label><select data-setting="vision"><option value="thermal">THERMAL</option><option value="green">GREEN NV</option><option value="white">WHITE NV</option></select><span></span>
+        </div>
+        <div class="hi">HIGH SCORE <span id="menu-hi">0</span></div>
+        <p class="dim audio-mode" id="audio-mode"></p>
+        <button id="deploy">DEPLOY DRONE</button>
+        <p id="debug-note" class="warn hidden"></p>
+        <p class="perf-hint warn hidden">Frame rate looks capped at 30 FPS. If you are on battery, Chrome's Energy Saver limits games to 30 FPS: plug in or turn it off under Settings → Performance.</p>
+      </div>
+    </div>
+
+    <div id="pause" class="screen hidden">
+      <div class="panel">
+        <h1>LINK PAUSED</h1>
+        <div class="settings" id="pause-settings">
+          <label>MOUSE SENSITIVITY</label><input data-setting="sensitivity" type="range" min="0.3" max="2.5" step="0.05" /><span data-value="sensitivity"></span>
+          <label>MUSIC VOLUME</label><input data-setting="music" type="range" min="0" max="1" step="0.05" /><span data-value="music"></span>
+          <label>EFFECTS VOLUME</label><input data-setting="fx" type="range" min="0" max="1" step="0.05" /><span data-value="fx"></span>
+          <label>GRAPHICS</label><select data-setting="quality"><option value="auto">AUTO (60 FPS)</option><option value="low">LOW</option><option value="medium">MEDIUM</option><option value="high">HIGH</option></select><span></span>
+        </div>
+        <div class="buttons">
+          <button id="resume">RESUME</button>
+          <button id="exit" class="secondary">EXIT TO MAIN MENU</button>
+        </div>
+        <p id="lock-hint" class="dim"></p>
+        <p class="perf-hint warn hidden">Frame rate looks capped at 30 FPS. If you are on battery, Chrome's Energy Saver limits games to 30 FPS: plug in or turn it off under Settings → Performance.</p>
+      </div>
+    </div>
+
+    <div id="gameover" class="screen hidden">
+      <div class="panel">
+        <h1 class="red" id="go-title">BASE OVERRUN</h1>
+        <p class="dim" id="go-sub">THE OUTPOST HAS FALLEN</p>
+        <div id="newhi" class="badge hidden">NEW HIGH SCORE</div>
+        <div class="stats">
+          <span>SCORE</span><b id="go-score">0</b>
+          <span>WAVE REACHED</span><b id="go-wave">1</b>
+          <span>KILLS</span><b id="go-kills">0</b>
+          <span>HEADSHOTS</span><b id="go-heads">0</b>
+          <span>ACCURACY</span><b id="go-acc">0%</b>
+          <span>HIGH SCORE</span><b id="go-hi">0</b>
+        </div>
+        <div class="buttons">
+          <button id="redeploy">REDEPLOY</button>
+          <button id="to-menu" class="secondary">MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="debug" class="hidden"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

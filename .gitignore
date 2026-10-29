@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Raw downloads cached by `npm run assets`
+.asset-cache/
+
+# Environment files (keep the template)
+.env
+.env.*
+!.env.example
+
+# Deployment
+.vercel/
+.netlify/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Caches and tooling
+.cache/
+.vite/
+.eslintcache
+coverage/
+*.tsbuildinfo
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.suo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Authoring / source assets (not loaded at runtime)
+*.blend
+*.blend1
+*.psd
+*.kra
+*.xcf
+
+# AI assistant workspaces
+.claude/
+CLAUDE.local.md
